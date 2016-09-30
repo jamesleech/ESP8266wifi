@@ -22,9 +22,9 @@ const char NO_CHANGE[] PROGMEM = "no change";
 const char SEND_OK[] PROGMEM = "SEND OK";
 const char LINK_IS_NOT[] PROGMEM = "link is not";
 const char PROMPT[] PROGMEM = ">";
-const char BUSY[] PROGMEM =  "busy";
+const char BUSY_STILL[] PROGMEM =  "busy";
 const char LINKED[] PROGMEM = "Linked";
-const char ALREADY[] PROGMEM = "ALREAY";//yes typo in firmware..
+const char ALREADY[] PROGMEM = "ALREAY"; //yes typo in firmware..
 const char READY[] PROGMEM = "ready";
 const char NO_IP[] PROGMEM = "0.0.0.0";
 
@@ -69,10 +69,10 @@ ESP8266wifi::ESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin) {
     _serialIn = &serialIn;
     _serialOut = &serialOut;
     _resetPin = resetPin;
-    
+
     pinMode(_resetPin, OUTPUT);
     digitalWrite(_resetPin, LOW);//Start with radio off
-    
+
     flags.connectToServerUsingTCP = true;
     flags.endSendWithNewline = true;
     flags.started = false;
@@ -80,12 +80,12 @@ ESP8266wifi::ESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin) {
     flags.localApConfigured = false;
     flags.apConfigured = false;
     flags.serverConfigured = false;
-    
+
     flags.debug = false;
     flags.echoOnOff = false;
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
-      _connections[i].channel = i + 0x30; // index to ASCII 
+      _connections[i].channel = i + 0x30; // index to ASCII
       _connections[i].connected = false;
     }
 }
@@ -94,10 +94,10 @@ ESP8266wifi::ESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin, Str
     _serialIn = &serialIn;
     _serialOut = &serialOut;
     _resetPin = resetPin;
-    
+
     pinMode(_resetPin, OUTPUT);
     digitalWrite(_resetPin, LOW);//Start with radio off
-    
+
     flags.connectToServerUsingTCP = true;
     flags.endSendWithNewline = true;
     flags.started = false;
@@ -105,13 +105,13 @@ ESP8266wifi::ESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin, Str
     flags.localApConfigured = false;
     flags.apConfigured = false;
     flags.serverConfigured = false;
-    
+
     _dbgSerial = &dbgSerial;
     flags.debug = true;
-    flags.echoOnOff = true;    
+    flags.echoOnOff = true;
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
-      _connections[i].channel = i + 0x30; // index to ASCII 
+      _connections[i].channel = i + 0x30; // index to ASCII
       _connections[i].connected = false;
     }
 }
@@ -128,7 +128,7 @@ bool ESP8266wifi::begin() {
     flags.localServerConfigured = false;
     flags.localApConfigured = false;
     serverRetries = 0;
-    
+
     //Do a HW reset
     bool statusOk = false;
     byte i;
@@ -142,14 +142,15 @@ bool ESP8266wifi::begin() {
         if(statusOk)
             break;
     }
+
     if (!statusOk)
         return false;
-    
+
     //Turn local AP = off
     writeCommand(CWMODE_1, EOL);
     if (readCommand(1000, OK, NO_CHANGE) == 0)
         return false;
-    
+
     // Set echo on/off
     if(flags.echoOnOff)//if echo = true
         writeCommand(ATE1, EOL);
@@ -157,7 +158,7 @@ bool ESP8266wifi::begin() {
         writeCommand(ATE0, EOL);
     if (readCommand(1000, OK, NO_CHANGE) == 0)
         return false;
-    
+
     // Set mux to enable multiple connections
     writeCommand(CIPMUX_1, EOL);
     flags.started = readCommand(3000, OK, NO_CHANGE) > 0;
@@ -180,7 +181,7 @@ bool ESP8266wifi::connectToAP(String& ssid, String& password) {
     return connectToAP(ssid.c_str(), password.c_str());
 }
 
-bool ESP8266wifi::connectToAP(const char* ssid, const char* password){//TODO make timeout config or parameter??
+bool ESP8266wifi::connectToAP(const char* ssid, const char* password) { //TODO make timeout config or parameter??
     strncpy(_ssid, ssid, sizeof _ssid);
     strncpy(_password, password, sizeof _password);
     flags.apConfigured = true;
@@ -263,9 +264,9 @@ bool ESP8266wifi::connectToServer(){
     _serialOut -> print(_ip);
     writeCommand(COMMA_1);
     _serialOut -> println(_port);
-    
+
     flags.connectedToServer = (readCommand(10000, LINKED, ALREADY) > 0);
-    
+
     if(flags.connectedToServer)
         serverRetries = 0;
     return flags.connectedToServer;
@@ -291,7 +292,7 @@ bool ESP8266wifi::startLocalAPAndServer(const char* ssid, const char* password, 
     strncpy(_localAPPassword, password, sizeof _localAPPassword);
     strncpy(_localAPChannel, channel, sizeof _localAPChannel);
     strncpy(_localServerPort, port, sizeof _localServerPort);
-    
+
     flags.localApConfigured = true;
     flags.localServerConfigured = true;
     return startLocalAp() && startLocalServer();
@@ -316,7 +317,7 @@ bool ESP8266wifi::startLocalServer(){
     // Start local server
     writeCommand(CIPSERVERSTART);
     _serialOut -> println(_localServerPort);
-    
+
     flags.localServerRunning = (readCommand(2000, OK, NO_CHANGE) > 0);
     return flags.localServerRunning;
 }
@@ -326,7 +327,7 @@ bool ESP8266wifi::startLocalAp(){
     writeCommand(CWMODE_3, EOL);
     if (!readCommand(2000, OK, NO_CHANGE))
         return false;
-    
+
     // Configure the soft ap
     writeCommand(CWSAP);
     _serialOut -> print(_localAPSSID);
@@ -335,7 +336,7 @@ bool ESP8266wifi::startLocalAp(){
     writeCommand(COMMA_1);
     _serialOut -> print(_localAPChannel);
     writeCommand(THREE_COMMA, EOL);
-    
+
     flags.localApRunning = (readCommand(5000, OK, ERROR) == 1);
     return flags.localApRunning;
 }
@@ -394,17 +395,17 @@ bool ESP8266wifi::send(char channel, String& message, bool sendNow) {
     return send(channel, message.c_str(), sendNow);
 }
 
-bool ESP8266wifi::send(char channel, const char * message, bool sendNow){
+bool ESP8266wifi::send(char channel, const char * message, bool sendNow) {
     watchdog();
     byte avail = sizeof(msgOut) - strlen(msgOut) - 1;
     strncat(msgOut, message, avail);
     if (!sendNow)
         return true;
     byte length = strlen(msgOut);
-    
+
     if(flags.endSendWithNewline)
         length += 2;
-    
+
     writeCommand(CIPSEND);
     _serialOut -> print(channel);
     writeCommand(COMMA);
@@ -415,7 +416,7 @@ bool ESP8266wifi::send(char channel, const char * message, bool sendNow){
             _serialOut -> println(msgOut);
         else
             _serialOut -> print(msgOut);
-        byte sendStatus = readCommand(5000, SEND_OK, BUSY);
+        byte sendStatus = readCommand(5000, SEND_OK, BUSY_STILL);
         if (sendStatus == 1) {
             msgOut[0] = '\0';
             if(channel == SERVER)
@@ -426,7 +427,7 @@ bool ESP8266wifi::send(char channel, const char * message, bool sendNow){
     //else
     if(channel == SERVER)
         flags.connectedToServer = false;
-    else 
+    else
         _connections[channel-0x30].connected = false;
     msgOut[0] = '\0';
     return false;
@@ -500,7 +501,7 @@ bool ESP8266wifi::checkConnections(WifiConnection **pConnections) {
       if (ch == SERVER)
           flags.connectedToServer = true;
       return 1;
-    } 
+    }
 
     // channel disconnected
     if (ret == 3) {
@@ -520,16 +521,16 @@ WifiMessage ESP8266wifi::listenForIncomingMessage(int timeout){
     watchdog();
     char buf[16] = {'\0'};
     msgIn[0] = '\0';
-    
+
     static WifiMessage msg;
-    
+
     msg.hasData = false;
     msg.channel = '-';
     msg.message = msgIn;
 
     //TODO listen for unlink etc...
     byte msgOrRestart = readCommand(timeout, IPD, READY);
-    
+
     //Detected a esp8266 restart
     if (msgOrRestart == 2){
         restart();
@@ -557,16 +558,16 @@ WifiMessage ESP8266wifi::getIncomingMessage(void) {
     watchdog();
     char buf[16] = {'\0'};
     msgIn[0] = '\0';
-    
+
     static WifiMessage msg;
-    
+
     msg.hasData = false;
     msg.channel = '-';
     msg.message = msgIn;
 
     // See if a message has come in (block 1s otherwise misses?)
     byte msgOrRestart = readCommand(10, IPD, READY);
-    
+
     //Detected a esp8266 restart
     if (msgOrRestart == 2){
         restart();
