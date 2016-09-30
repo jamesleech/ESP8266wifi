@@ -23,7 +23,7 @@ const char SEND_OK[] PROGMEM = "SEND OK";
 const char LINK_IS_NOT[] PROGMEM = "link is not";
 const char PROMPT[] PROGMEM = ">";
 
-const char BUSYC[] PROGMEM =  "busy";
+const char BUSY_STILL[] PROGMEM =  "busy";
 const char LINKED[] PROGMEM = "Linked";
 const char ALREADY[] PROGMEM = "ALREAY"; //yes typo in firmware..
 const char READY[] PROGMEM = "ready";
@@ -416,7 +416,7 @@ bool ESP8266wifi::send(char channel, const char * message, bool sendNow) {
             _serialOut -> println(msgOut);
         else
             _serialOut -> print(msgOut);
-        byte sendStatus = readCommand(5000, SEND_OK, BUSYC);
+        byte sendStatus = readCommand(5000, SEND_OK, BUSY_STILL);
         if (sendStatus == 1) {
             msgOut[0] = '\0';
             if(channel == SERVER)
